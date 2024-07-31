@@ -22,9 +22,9 @@ mongoose
   .catch((err) => console.error("Error connecting to MongoDB", err));
 
 // MODELS
-const Cohort = require("./models/cohort");
+const Cohort = require("./models/Cohort.model.js");
 console.log("Cohort", Cohort);
-const Student = require("./models/student.js");
+const Student = require("./models/Student.model.js");
 
 // MIDDLEWARE
 // Research Team - Set up CORS middleware here:
@@ -52,6 +52,8 @@ app.get("/docs", (req, res) => {
   res.sendFile(__dirname + "/views/docs.html");
 });
 
+// Cohort Routes
+
 app.get("/api/cohorts", async (req, res) => {
   try {
     const cohorts = await Cohort.find();
@@ -62,12 +64,125 @@ app.get("/api/cohorts", async (req, res) => {
   }
 });
 
+app.post("/api/cohorts", async (req, res) => {
+  try {
+    const newCohort = req.body;
+    const cohort = await Cohort.create(newCohort);
+    res.status(201).json(cohort);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating cohort" });
+  }
+});
+
+app.get("/api/cohorts/:cohortId", async (req, res) => {
+  const cohortId = req.params.cohortId;
+  try {
+    const cohort = await Cohort.findById(cohortId);
+    res.json(cohort);
+  } catch (error) {
+    res.status(500).json({
+      message: ` Error fetching cohort with id ${cohortId}`,
+    });
+  }
+});
+
+app.put("/api/cohorts/:cohortId", async (req, res) => {
+  const cohortId = req.params.cohortId;
+  const updatedCohort = req.body;
+  try {
+    const cohort = await Cohort.findByIdAndUpdate(cohortId, updatedCohort, {
+      new: true,
+    }).populate("students");
+    res.status(200).json(cohort);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: ` Error updating cohort with id ${cohortId}`,
+    });
+  }
+});
+
+app.delete("/api/cohorts/:cohortId", async (req, res) => {
+  const cohortId = req.params.cohortId;
+  try {
+    await Cohort.findByIdAndDelete(cohortId);
+    res.status(204).json();
+  } catch (error) {
+    res.status(500).json({
+      message: ` Error deleting cohort with id ${cohortId}`,
+    });
+  }
+});
+// Student Routes
+
 app.get("/api/students", async (req, res) => {
   try {
-    const students = await Student.find();
+    const students = await Student.find().populate("cohort");
     res.json(students);
   } catch (error) {
     res.status(500).send(error);
+  }
+});
+
+app.post("/api/students", async (req, res) => {
+  try {
+    const newStudent = req.body;
+    const student = await Student.create(newStudent);
+    res.status(201).json(student);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating student" });
+  }
+});
+
+app.get("/api/students/cohort/:cohortId", async (req, res) => {
+  const cohortId = req.params.cohortId;
+  try {
+    const students = await Student.find({ cohort: cohortId });
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({
+      message: ` Error fetching students from the cohort ${cohortId}`,
+    });
+  }
+});
+
+app.get("/api/students/:studentId", async (req, res) => {
+  const studentId = req.params.studentId;
+  try {
+    const student = await Student.findById(studentId).populate("cohort");
+    res.json(student);
+  } catch (error) {
+    res.status(500).json({
+      message: ` Error fetching student with id ${studentId}`,
+    });
+  }
+});
+
+app.put("/api/students/:studentId", async (req, res) => {
+  const studentId = req.params.studentId;
+  const updatedStudent = req.body;
+  try {
+    const student = await Student.findByIdAndUpdate(studentId, updatedStudent, {
+      new: true,
+    });
+    res.status(200).json(student);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: ` Error updating student with id ${studentId}`,
+    });
+  }
+});
+
+app.delete("/api/students/:studentId", async (req, res) => {
+  const studentId = req.params.studentId;
+  try {
+    await Student.findByIdAndDelete(studentId);
+    res.status(204).json();
+  } catch (error) {
+    res.status(500).json({
+      message: ` Error deleting student with id ${studentId}`,
+    });
   }
 });
 
