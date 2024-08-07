@@ -52,6 +52,12 @@ const cohortSchema = new Schema({
     type: Number,
     default: 360,
   },
+  students: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+    },
+  ],
 });
 
 const Cohort = mongoose.model("Cohort", cohortSchema);
